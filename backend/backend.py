@@ -4,8 +4,9 @@ import numpy as np
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
+
+from schemas import PredictionInput, PredictionOutput
 
 # Add the project root to sys.path so we can import Model
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -103,21 +104,11 @@ print(
 )
 
 
-# ── Pydantic schemas ──────────────────────────────────────────
-class PredictionInput(BaseModel):
-    active_users: float
-    time_of_day: float
-    background_jobs: float
-    db_latency_ms: float
-
-
-class PredictionOutput(BaseModel):
-    cpu_usage_pct: float
-    inputs: PredictionInput
-
-
 # ── Routes ────────────────────────────────────────────────────
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
+
+
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
 @app.get("/")
