@@ -19,9 +19,12 @@ A full-stack machine learning application that predicts server CPU usage percent
 CPU Usage/
 ├── main.py                      # Entry point — launches the FastAPI server
 ├── backend/
-│   └── backend.py               # FastAPI app, routes, training data & normalisation
+│   ├── backend.py               # FastAPI app, routes, training data & normalisation
+│   └── schemas.py               # Pydantic request/response models
 ├── frontend/
-│   └── index.html               # Single-page frontend (HTML/CSS/JS)
+│   ├── index.html               # HTML markup
+│   ├── style.css                # Stylesheet
+│   └── script.js                # Client-side JavaScript
 ├── Model/
 │   └── modelCalculations.py     # Custom LinearRegression class (NumPy)
 └── README.md
@@ -120,7 +123,7 @@ The server starts at **http://127.0.0.1:8000**. Open that URL in your browser to
 
 ## How It Works
 
-1. **Training** — At server startup, the model trains on 20 labelled samples using gradient descent (5 000 iterations, learning rate 0.01).
+1. **Training** — At server startup, the model trains on 20 labelled samples using gradient descent (10 000 iterations, learning rate 0.01).
 2. **Normalisation** — Features are z-score normalised using training-set mean and standard deviation.
 3. **Prediction** — User inputs are normalised with the same statistics, then passed through the trained linear model: $\hat{y} = \mathbf{w} \cdot \mathbf{x} + b$.
 4. **Display** — The frontend colour-codes the result:
