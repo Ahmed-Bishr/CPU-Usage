@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CPU Usage Predictor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e0e0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 40px 48px;
+            width: 460px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #ccc;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.07);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.25);
+        }
+
+        input::placeholder { color: #666; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6c63ff, #4834d4);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: transform 0.15s, box-shadow 0.15s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ── Result card ── */
+        .result {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(108, 99, 255, 0.1);
+            border: 1px solid rgba(108, 99, 255, 0.25);
+            text-align: center;
+            display: none;
+        }
+
+        .result.visible { display: block; animation: fadeIn 0.35s ease; }
+
+        .result-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+
+        .result-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #6c63ff;
+        }
+
+        .result-value span { font-size: 1rem; font-weight: 400; color: #999; }
+
+        /* colour coding */
+        .result-value.low  { color: #2ecc71; }
+        .result-value.mid  { color: #f39c12; }
+        .result-value.high { color: #e74c3c; }
+
+        .error-msg {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .error-msg.visible { display: block; animation: fadeIn 0.35s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CPU Usage Predictor</h1>
+        <p class="subtitle">Enter server metrics to predict CPU usage&nbsp;%</p>
+
+        <form id="predictForm">
+            <div class="form-group">
+                <label for="active_users">Active Users</label>
+                <input type="number" id="active_users" placeholder="e.g. 300" required />
+            </div>
+
+            <div class="form-group">
+                <label for="time_of_day">Time of Day (0-23)</label>
+                <input type="number" id="time_of_day" min="0" max="23" placeholder="e.g. 12" required />
+            </div>
+
+            <div class="form-group">
+                <label for="background_jobs">Background Jobs</label>
+                <input type="number" id="background_jobs" placeholder="e.g. 5" required />
+            </div>
+
+            <div class="form-group">
+                <label for="db_latency_ms">DB Latency (ms)</label>
+                <input type="number" id="db_latency_ms" placeholder="e.g. 30" required />
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">Predict CPU Usage</button>
+        </form>
+
+        <div class="result" id="resultCard">
+            <div class="result-label">Predicted CPU Usage</div>
+            <div class="result-value" id="resultValue">—</div>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+
+        const form      = document.getElementById('predictForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultCard  = document.getElementById('resultCard');
+        const resultValue = document.getElementById('resultValue');
+        const errorMsg    = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.classList.remove('visible');
+            resultCard.classList.remove('visible');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Predicting…';
+
+            const payload = {
+                active_users:    parseFloat(document.getElementById('active_users').value),
+                time_of_day:     parseFloat(document.getElementById('time_of_day').value),
+                background_jobs: parseFloat(document.getElementById('background_jobs').value),
+                db_latency_ms:   parseFloat(document.getElementById('db_latency_ms').value),
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!res.ok) {
+                    const detail = await res.json();
+                    throw new Error(detail.detail || `Server error ${res.status}`);
+                }
+
+                const data = await res.json();
+                const pct  = data.cpu_usage_pct;
+
+                // colour-code the result
+                let cls = 'low';
+                if (pct > 75)      cls = 'high';
+                else if (pct > 40) cls = 'mid';
+
+                resultValue.className = 'result-value ' + cls;
+                resultValue.innerHTML = `${pct.toFixed(1)} <span>%</span>`;
+                resultCard.classList.add('visible');
+            } catch (err) {
+                errorMsg.textContent = err.message;
+                errorMsg.classList.add('visible');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Predict CPU Usage';
+            }
+        });
+    </script>
+</body>
+</html>
