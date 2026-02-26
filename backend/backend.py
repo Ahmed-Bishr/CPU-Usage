@@ -84,7 +84,7 @@ X_norm = (X_train - X_mean) / X_std
 m, n = X_norm.shape
 w_init = np.zeros(n)
 b_init = 0.0
-iterations = 5000
+iterations = 10000
 alpha = 0.01
 
 model = LinearRegression(
