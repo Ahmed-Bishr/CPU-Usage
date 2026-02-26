@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
-from schemas import PredictionInput, PredictionOutput
+from backend.schemas import PredictionInput, PredictionOutput
 
 # Add the project root to sys.path so we can import Model
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
